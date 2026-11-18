@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-  <script src="app.mjs" type="module"></script>
+  <link rel="stylesheet" href="styles.css?v=2">
+  <script src="app.mjs?v=2" type="module"></script>
 </head>
 <body>
   <main class="shell">
@@ -31,43 +31,48 @@
         <button type="button" data-level="hard" aria-pressed="false">Vanskeleg</button>
       </div>
 
-      <div class="game-layout">
-        <div class="board" id="board" role="grid" aria-label="Sudokubrett" aria-describedby="board-help"></div>
-
-        <div class="controls">
-          <div class="progress">
-            <label for="progress">Framdrift</label>
-            <span id="progress-text"></span>
-            <progress id="progress" value="0" max="1"></progress>
-          </div>
-
-          <div id="keypad" class="number-pad" role="group" aria-label="Taltastar"></div>
-
-          <div class="entry-tools" role="group" aria-label="Fyll ut brettet">
-            <button type="button" id="notes" aria-pressed="false">Notat</button>
-            <button type="button" id="undo">Angre</button>
-            <button type="button" id="erase">Slett</button>
-          </div>
-          <div class="check-tools">
-            <button type="button" id="check" class="primary">Sjekk</button>
-            <button type="button" id="hint">Hint</button>
-          </div>
-          <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
-          <p id="storage-note" class="storage-note" hidden>Nettlesaren kan ikkje lagre framdrifta di her.</p>
-
-          <details class="more">
-            <summary>Fleire val</summary>
-            <div class="more-tools">
-              <button type="button" id="clear-errors">Tøm feil</button>
-              <button type="button" id="reset">Start på nytt</button>
-              <button type="button" id="reveal">Vis fasit</button>
-            </div>
-          </details>
+      <div class="board" id="board" role="grid" aria-label="Sudokubrett" aria-describedby="board-help"></div>
+      <div class="controls">
+        <div class="progress">
+          <label for="progress">Framdrift</label>
+          <span id="progress-text"></span>
+          <progress id="progress" value="0" max="1"></progress>
         </div>
+        <div class="game-tools" role="group" aria-label="Speleverktøy">
+          <button type="button" id="undo">Angre</button>
+          <button type="button" id="check" class="primary">Sjekk</button>
+          <button type="button" id="hint">Hint</button>
+        </div>
+        <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+        <p id="storage-note" class="storage-note" hidden>Nettlesaren kan ikkje lagre framdrifta di her.</p>
       </div>
-      <p class="board-help" id="board-help">Vel eit felt og bruk taltastane. Med tastatur kan du òg flytte deg med piltastane.</p>
+      <p class="board-help" id="board-help">Trykk på ei rute for å velje tal. Med tastaturet kan du flytte deg med piltastane og taste tal direkte.</p>
+      <details class="more">
+        <summary>Fleire val</summary>
+        <div class="more-tools">
+          <button type="button" id="clear-errors">Tøm feil</button>
+          <button type="button" id="reset">Start på nytt</button>
+          <button type="button" id="reveal">Vis fasit</button>
+        </div>
+      </details>
     </section>
   </main>
+
+  <dialog id="number-dialog" class="number-dialog" aria-labelledby="number-title" aria-describedby="number-position">
+    <header class="number-header">
+      <div>
+        <h2 id="number-title">Vel tal</h2>
+        <p id="number-position"></p>
+      </div>
+      <button type="button" id="close-number" class="close-number" aria-label="Lukk talveljaren">×</button>
+    </header>
+    <div id="keypad" class="number-pad" role="group" aria-label="Taltastar"></div>
+    <div class="number-tools" role="group" aria-label="Fyll ut ruta">
+      <button type="button" id="notes" aria-pressed="false">Notat</button>
+      <button type="button" id="erase">Slett</button>
+    </div>
+    <p id="number-note" class="number-note" role="status" hidden></p>
+  </dialog>
 
   <dialog id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-text">
     <h2 id="confirm-title"></h2>

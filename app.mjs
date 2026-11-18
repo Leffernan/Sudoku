@@ -6,6 +6,9 @@ const board = byId('board');
 const keypad = byId('keypad');
 const levelButtons = [...document.querySelectorAll('[data-level]')];
 const dialog = byId('confirm-dialog');
+const numberDialog = byId('number-dialog');
+const numberPosition = byId('number-position');
+const numberNote = byId('number-note');
 const status = byId('feedback');
 const progress = byId('progress');
 const progressText = byId('progress-text');
@@ -31,6 +34,7 @@ const numberKeys = [];
 const cellButtons = [];
 let game;
 let pendingAction;
+let pressedBackdrop = false;
 
 function readStorage(key) {
   try { return localStorage.getItem(key); }
@@ -145,6 +149,8 @@ function renderBoard(locked) {
     button.classList.toggle('error', wrong);
     wrapper.setAttribute('aria-selected', String(current));
     wrapper.setAttribute('aria-readonly', String(locked || given));
+    if (locked || given) button.removeAttribute('aria-haspopup');
+    else button.setAttribute('aria-haspopup', 'dialog');
     valueLabel.textContent = value || '';
     for (const digit of digits) {
       noteLabels[digit - 1].textContent = !value && (game.notes[i] & (1 << digit)) ? digit : '';
@@ -154,6 +160,31 @@ function renderBoard(locked) {
       : notes.length ? 'notat ' + notes.join(', ') : 'tomt';
     button.setAttribute('aria-label', 'Rad ' + (row + 1) + ', kolonne ' + (col + 1) + ', ' + description + (wrong ? ', feil' : ''));
   });
+}
+
+function renderNumberPicker(locked) {
+  const i = game.selected;
+  const { row, col } = cells[i];
+  const value = game.values[i];
+  const notes = numberList(game.notes[i]);
+  const inNotesMode = game.notesMode;
+  numberPosition.textContent = 'Rad ' + (row + 1) + ', kolonne ' + (col + 1);
+  notesButton.setAttribute('aria-pressed', String(inNotesMode));
+  notesButton.disabled = locked;
+  eraseButton.disabled = locked || !(value || notes.length);
+
+  for (const [index, button] of numberKeys.entries()) {
+    const digit = index + 1;
+    button.disabled = locked || (inNotesMode && value !== 0);
+    button.classList.toggle('current', !inNotesMode && value === digit);
+    if (inNotesMode) button.setAttribute('aria-pressed', String(notes.includes(digit)));
+    else button.removeAttribute('aria-pressed');
+  }
+
+  numberNote.hidden = !inNotesMode;
+  numberNote.textContent = !inNotesMode ? '' : value
+    ? 'Slett talet før du legg til notat.'
+    : notes.length ? 'Notat i ruta ' + notes.join(', ') : 'Du kan velje fleire tal.';
 }
 
 function render() {
@@ -167,17 +198,13 @@ function render() {
   board.classList.toggle('solved', finished && !game.revealed);
 
   for (const btn of levelButtons) btn.setAttribute('aria-pressed', String(btn.dataset.level === game.level));
-  for (const btn of numberKeys) btn.disabled = locked || Boolean(game.puzzle[game.selected]);
-  notesButton.setAttribute('aria-pressed', String(game.notesMode));
-  notesButton.disabled = locked;
   undoButton.disabled = game.history.length === 0;
-  eraseButton.disabled = locked || Boolean(game.puzzle[game.selected]) ||
-    !(game.values[game.selected] || game.notes[game.selected]);
   hintButton.disabled = locked;
   revealButton.disabled = locked;
   clearErrorsButton.disabled = locked;
   checkButton.disabled = game.revealed;
   renderBoard(locked);
+  if (numberDialog.open) renderNumberPicker(locked);
 }
 
 function announce(message) {
@@ -227,7 +254,7 @@ function wrongCells() {
 }
 
 function toggleNotes() {
-  if (notesButton.disabled) return;
+  if (game.revealed || isSolved()) return;
   game.notesMode = !game.notesMode;
   save();
   render();
@@ -294,7 +321,7 @@ function buildKeypad() {
     button.type = 'button';
     button.textContent = digit;
     button.setAttribute('aria-label', 'Tal ' + digit);
-    button.addEventListener('click', () => enter(digit));
+    button.addEventListener('click', () => chooseNumber(digit));
     numberKeys.push(button);
   }
   keypad.append(...numberKeys);
@@ -336,6 +363,41 @@ function notifyHost(type, detail = {}) {
   if (embedded) window.parent.postMessage({ widget: embedProtocol, type, ...detail }, '*');
 }
 
+function openDialog(element) {
+  element.showModal();
+  notifyHost('open');
+}
+
+function closeHostDialog() {
+  if (!dialog.open && !numberDialog.open) notifyHost('close');
+}
+
+function openNumberPicker() {
+  renderNumberPicker(false);
+  openDialog(numberDialog);
+  numberKeys.find(button => !button.disabled)?.focus({ preventScroll: true });
+}
+
+function chooseNumber(digit) {
+  if (digit === 0 ? eraseButton.disabled : numberKeys[digit - 1].disabled) return;
+  enter(digit);
+  if (digit === 0 || !game.notesMode) numberDialog.close();
+}
+
+function handlePickerKey(event) {
+  if (event.altKey || event.ctrlKey || event.metaKey) return;
+  if (/^[0-9]$/.test(event.key)) {
+    event.preventDefault();
+    chooseNumber(Number(event.key));
+  } else if (event.key === 'Delete' || event.key === 'Backspace') {
+    event.preventDefault();
+    chooseNumber(0);
+  } else if (event.key.toLowerCase() === 'n') {
+    event.preventDefault();
+    toggleNotes();
+  }
+}
+
 function reportHeight() {
   notifyHost('height', { height: Math.ceil(document.body.getBoundingClientRect().height) });
 }
@@ -368,8 +430,7 @@ function showConfirmation(action) {
   byId('confirm-title').textContent = pendingAction.title;
   byId('confirm-text').textContent = pendingAction.description;
   byId('confirm').textContent = pendingAction.title;
-  dialog.showModal();
-  notifyHost('open');
+  openDialog(dialog);
 }
 
 function updateDay() {
@@ -381,7 +442,10 @@ buildKeypad();
 for (const eventName of ['click', 'focusin']) {
   board.addEventListener(eventName, event => {
     const cell = event.target.closest('[data-cell]');
-    if (cell) selectCell(Number(cell.dataset.cell));
+    if (!cell) return;
+    const clicked = event.type === 'click';
+    selectCell(Number(cell.dataset.cell), clicked);
+    if (clicked && cell.hasAttribute('aria-haspopup')) openNumberPicker();
   });
 }
 board.addEventListener('keydown', handleBoardKey);
@@ -393,7 +457,21 @@ for (const button of levelButtons) {
 }
 notesButton.addEventListener('click', toggleNotes);
 undoButton.addEventListener('click', undo);
-eraseButton.addEventListener('click', () => enter(0));
+eraseButton.addEventListener('click', () => chooseNumber(0));
+byId('close-number').addEventListener('click', () => numberDialog.close());
+numberDialog.addEventListener('keydown', handlePickerKey);
+numberDialog.addEventListener('pointerdown', event => {
+  pressedBackdrop = event.target === numberDialog;
+});
+numberDialog.addEventListener('click', event => {
+  if (pressedBackdrop && event.target === numberDialog) numberDialog.close();
+  pressedBackdrop = false;
+});
+numberDialog.addEventListener('close', () => {
+  pressedBackdrop = false;
+  if (!dialog.open && !numberDialog.open) selectCell(game.selected, true);
+  closeHostDialog();
+});
 hintButton.addEventListener('click', giveHint);
 checkButton.addEventListener('click', () => {
   errors.clear();
@@ -418,7 +496,7 @@ byId('confirm').addEventListener('click', () => {
 });
 dialog.addEventListener('close', () => {
   pendingAction = undefined;
-  notifyHost('close');
+  closeHostDialog();
 });
 byId('today').addEventListener('click', () => loadGame(osloDay(), game.level));
 

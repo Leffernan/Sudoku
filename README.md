@@ -18,7 +18,7 @@ Lim inn heile blokka i HTML-feltet i artikkelen.
 <script src="https://leffernan.github.io/Sudoku/embed-host.js" defer></script>
 ```
 
-Skriptet tilpassar høgda etter breidda på artikkelen og lèt stadfestingsvindauget opne over artikkelen.
+Skriptet tilpassar høgda etter breidda på artikkelen og lèt talveljaren og stadfestingsvindauget opne over artikkelen. Eit trykk på ei rute som kan fyllast ut, opnar talveljaren. Piltastane og tala på tastaturet kan òg brukast direkte på brettet.
 
 ## Gjennomgang av den gamle koden
 
