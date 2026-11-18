@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="nn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F7F3E9">
+  <meta name="description" content="Spel Dagens Sudoku hos Bygdebladet. Vel mellom tre nivå og få nye brett kvar dag.">
+  <title>Dagens Sudoku | Bygdebladet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.mjs" type="module"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="intro">
+      <h1>Dagens <span>Sudoku</span></h1>
+      <time id="game-date"></time>
+    </header>
+    <noscript><p>Slå på JavaScript i nettlesaren for å spele Sudoku.</p></noscript>
+
+    <section id="game" aria-label="Sudoku" hidden>
+      <div id="new-day" class="new-day" hidden>
+        <p>Nye brett er klare.</p>
+        <button type="button" class="primary" id="today">Spel dagens brett</button>
+      </div>
+      <div class="levels" role="group" aria-label="Vel vanskegrad">
+        <button type="button" data-level="easy" aria-pressed="false">Lett</button>
+        <button type="button" data-level="medium" aria-pressed="true">Middels</button>
+        <button type="button" data-level="hard" aria-pressed="false">Vanskeleg</button>
+      </div>
+
+      <div class="game-layout">
+        <div class="board" id="board" role="grid" aria-label="Sudokubrett" aria-describedby="board-help"></div>
+
+        <div class="controls">
+          <div class="progress">
+            <label for="progress">Framdrift</label>
+            <span id="progress-text"></span>
+            <progress id="progress" value="0" max="1"></progress>
+          </div>
+
+          <div id="keypad" class="number-pad" role="group" aria-label="Taltastar"></div>
+
+          <div class="entry-tools" role="group" aria-label="Fyll ut brettet">
+            <button type="button" id="notes" aria-pressed="false">Notat</button>
+            <button type="button" id="undo">Angre</button>
+            <button type="button" id="erase">Slett</button>
+          </div>
+          <div class="check-tools">
+            <button type="button" id="check" class="primary">Sjekk</button>
+            <button type="button" id="hint">Hint</button>
+          </div>
+          <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+          <p id="storage-note" class="storage-note" hidden>Nettlesaren kan ikkje lagre framdrifta di her.</p>
+
+          <details class="more">
+            <summary>Fleire val</summary>
+            <div class="more-tools">
+              <button type="button" id="clear-errors">Tøm feil</button>
+              <button type="button" id="reset">Start på nytt</button>
+              <button type="button" id="reveal">Vis fasit</button>
+            </div>
+          </details>
+        </div>
+      </div>
+      <p class="board-help" id="board-help">Vel eit felt og bruk taltastane. Med tastatur kan du òg flytte deg med piltastane.</p>
+    </section>
+  </main>
+
+  <dialog id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+    <h2 id="confirm-title"></h2>
+    <p id="confirm-text"></p>
+    <div class="dialog-actions">
+      <button type="button" id="cancel" autofocus>Avbryt</button>
+      <button type="button" class="primary" id="confirm"></button>
+    </div>
+  </dialog>
+</body>
+</html>
